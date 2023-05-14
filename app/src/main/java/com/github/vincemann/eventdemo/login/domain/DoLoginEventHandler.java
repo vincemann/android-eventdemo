@@ -1,11 +1,12 @@
 package com.github.vincemann.eventdemo.login.domain;
 
-import com.github.vincemann.eventdemo.common.domain.AbstractSubscriber;
+import com.github.vincemann.eventdemo.event.bus.LoginEventBus;
+import com.github.vincemann.eventdemo.event.subscriber.LoginEventBusSubscriber;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
-public class DoLoginEventHandler extends AbstractSubscriber {
+public class DoLoginEventHandler implements LoginEventBusSubscriber {
 
     @Subscribe
     public void onEvent(DoLoginEvent event) {
@@ -13,6 +14,6 @@ public class DoLoginEventHandler extends AbstractSubscriber {
          * Here is where we should perform a HTTP request to check the login credentials. Let's
          * assume the login is right
          */
-        EventBus.getDefault().post(new CorrectLoginEvent());
+        LoginEventBus.getInstance().post(new CorrectLoginEvent());
     }
 }

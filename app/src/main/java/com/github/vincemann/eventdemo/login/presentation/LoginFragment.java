@@ -8,13 +8,15 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.github.vincemann.eventdemo.event.registry.LoginEventBusRegistry;
+import com.github.vincemann.eventdemo.event.subscriber.LoginEventBusSubscriber;
 import com.gunhansancar.eventbusexample.R;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class LoginFragment extends Fragment {
+public class LoginFragment extends Fragment{
 
     @BindView(R.id.editTextUsername)
     TextView editTextUsername;
@@ -26,6 +28,7 @@ public class LoginFragment extends Fragment {
     Button buttonLogin;
 
     private LoginPresenter presenter;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {

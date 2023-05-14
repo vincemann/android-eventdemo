@@ -1,6 +1,7 @@
 package com.github.vincemann.eventdemo.common.domain;
 
 import android.content.Context;
+import android.util.Log;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -8,35 +9,30 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-public abstract class AbstractEventBusRegistry {
+/**
+ * Registry/Container for one specific eventbus.
+ * Registers default {@link EventBusSubscriber}s via {@link this#createDefaultSubscribers()}.
+ * Implement Singleton Pattern in subclasses and provide static access.
+ *
+ * @param <T> SubType of EventBus
+ */
+public abstract class AbstractEventBusRegistry<T extends AbstractEventBus> {
 
-    protected static AbstractEventBusRegistry INSTANCE;
 
-    protected final EventBus eventBus = EventBus.getDefault();
-    protected final List<EventBusSubscriber> defaultEventSubscribers = new ArrayList<>();
-    protected final HashMap<Object, EventBusSubscriber> eventSubscribers = new HashMap<>();
+    protected final T eventBus;
+    protected final List<EventBusSubscriber<? super T>> defaultEventSubscribers = new ArrayList<>();
+    protected final List<EventBusSubscriber<? super T>> eventSubscribers = new ArrayList<>();
     protected final Context applicationContext;
 
+    /**
+     * Create instance once in App or with DI as a singleton.
+     */
     protected AbstractEventBusRegistry(Context applicationContext) {
         this.applicationContext = applicationContext;
-        INSTANCE = this;
+        this.eventBus = createEventBus();
     }
 
-    public static interface EventBusSubscriber {
-        Object register(EventBus eventBus);
-        void unregister(EventBus eventBus);
-    }
-
-    public static void setInstance(AbstractEventBusRegistry instance) {
-        INSTANCE = instance;
-    }
-
-    public static AbstractEventBusRegistry getInstance() {
-        if (INSTANCE == null) {
-            throw new IllegalStateException("No Instance of SxEventBusRegistry found. Create a new Instance through your subclass and set this INSTANCE");
-        }
-        return INSTANCE;
-    }
+    protected abstract T createEventBus();
 
     public void registerDefaultSubscribers() {
         onBeforeRegisterDefaultSubscribers();
@@ -49,32 +45,45 @@ public abstract class AbstractEventBusRegistry {
 
     public void unregisterAllSubscribers() {
         onBeforeUnregisterAllEventSubscribers();
-        for (Object subscriber : eventSubscribers.keySet()) {
+        for (Object subscriber : eventSubscribers) {
             eventBus.unregister(subscriber);
         }
         eventSubscribers.clear();
     }
 
-    public void registerSubscriber(EventBusSubscriber subscriber) {
-        if (eventSubscribers.containsValue(subscriber)) {
+    /**
+     * Always register and unregister via the EventbusRegistry of an Eventbus!
+     */
+    public void registerSubscriber(EventBusSubscriber<? super T> subscriber) {
+        if (eventSubscribers.contains(subscriber)) {
+            Log.d(this.getClass().getSimpleName()+ "-register", "registerSubscriber: EventBusSubscriber to register is already presenet in registry's subscriber list. Skipping.");
             return;
         }
 
-        Object registeredSubscriber = subscriber.register(eventBus);
-        eventSubscribers.put(registeredSubscriber, subscriber);
+        subscriber.register(eventBus);
+        eventSubscribers.add(subscriber);
     }
 
-    public void unregisterSubscriber(Object subscriber) {
-        if (!eventSubscribers.containsKey(subscriber)) {
+    /**
+     * Always register and unregister via the EventbusRegistry of an Eventbus!
+     */
+    public void unregisterSubscriber(EventBusSubscriber<? super T> subscriber) {
+        if (!eventSubscribers.contains(subscriber)) {
+            Log.d(this.getClass().getSimpleName()+ "-unregister", "unregisterSubscriber: EventBusSubscriber to unregister was not found in registry's subscriber list. Please always use the " +
+                    "registry's register/unregister methods. Skipping.");
             return;
         }
 
-        EventBusSubscriber visitor = eventSubscribers.get(subscriber);
-        visitor.unregister(eventBus);
+        subscriber.unregister(eventBus);
         eventSubscribers.remove(subscriber);
     }
 
-    protected abstract List<EventBusSubscriber> createDefaultSubscribers();
+    /**
+     * Subscribers that live from the start of the application until either finished or explicitly removed.
+     * Opposite of dynamically added or removed subscribers.
+     * @return
+     */
+    protected abstract List<EventBusSubscriber<T>> createDefaultSubscribers();
     protected void onBeforeRegisterDefaultSubscribers(){}
     protected void onBeforeUnregisterAllEventSubscribers(){}
 }

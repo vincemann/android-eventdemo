@@ -1,5 +1,6 @@
 package com.github.vincemann.eventdemo.timer.presentation;
 
+import android.app.Fragment;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -11,13 +12,15 @@ import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.gunhansancar.eventbusexample.R;
 import com.github.vincemann.eventdemo.common.domain.AttachFragmentEvent;
-import com.github.vincemann.eventdemo.common.presentation.EventReportingFragment;
+import com.github.vincemann.eventdemo.event.bus.TimerEventBus;
+import com.github.vincemann.eventdemo.event.registry.TimerEventBusRegistry;
+import com.github.vincemann.eventdemo.event.subscriber.TimerEventBusSubscriber;
 import com.github.vincemann.eventdemo.login.presentation.LoginFragment;
 import com.github.vincemann.eventdemo.timer.domain.AddTimerElementEvent;
 import com.github.vincemann.eventdemo.timer.domain.StopTimerEvent;
 import com.github.vincemann.eventdemo.timer.domain.TimerService;
+import com.gunhansancar.eventbusexample.R;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -27,7 +30,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 
-public class TimerFragment extends EventReportingFragment {
+public class TimerFragment extends Fragment implements TimerEventBusSubscriber {
 
     @BindView(R.id.recyclerView)
     RecyclerView recyclerView;
@@ -45,7 +48,7 @@ public class TimerFragment extends EventReportingFragment {
         adapter.setOnItemClickListener(new TimerRecyclerAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(TimerRecyclerAdapter.ItemHolder item, int position) {
-                EventBus.getDefault().post(new AttachFragmentEvent(new LoginFragment()));
+                TimerEventBus.getInstance().post(new AttachFragmentEvent(new LoginFragment()));
             }
         });
 
@@ -58,19 +61,30 @@ public class TimerFragment extends EventReportingFragment {
         return view;
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        TimerEventBusRegistry.getInstance().registerSubscriber(this);
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        TimerEventBusRegistry.getInstance().unregisterSubscriber(this);
+    }
+
     @OnClick(R.id.startButton)
     public void onStartClicked() {
-        // todo call presenter method which triggers event and calls view.displayTimerStarted().
-        //  EventHandler is registered by registry and proceeds by handling
-        //  event and maybe trigger more events
         Toast.makeText(getActivity(), "Timer is started.", Toast.LENGTH_SHORT).show();
         getActivity().startService(new Intent(getActivity(), TimerService.class));
     }
 
     @OnClick(R.id.stopButton)
     public void onStopClicked() {
+        // todo usually you want to call the presenter here, which then triggers the event, handled in the presenter/service which calls methods on the
+        // view interface this class is implementing. Abbreviated here
         Toast.makeText(getActivity(), "Timer is stopped.", Toast.LENGTH_SHORT).show();
-        EventBus.getDefault().post(new StopTimerEvent());
+        TimerEventBus.getInstance().post(new StopTimerEvent());
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN, sticky = true)

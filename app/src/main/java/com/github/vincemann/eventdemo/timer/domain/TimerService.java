@@ -6,6 +6,10 @@ import android.os.IBinder;
 
 import androidx.annotation.Nullable;
 
+import com.github.vincemann.eventdemo.event.bus.TimerEventBus;
+import com.github.vincemann.eventdemo.event.registry.TimerEventBusRegistry;
+import com.github.vincemann.eventdemo.event.subscriber.TimerEventBusSubscriber;
+
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 
@@ -16,7 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Created by gunhansancar on 06/04/16.
  */
-public class TimerService extends Service {
+public class TimerService extends Service implements TimerEventBusSubscriber {
 
     private Timer timer;
     private AtomicInteger counter = new AtomicInteger();
@@ -36,13 +40,13 @@ public class TimerService extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        EventBus.getDefault().register(this);
+        TimerEventBusRegistry.getInstance().registerSubscriber(this);
 
     }
 
     @Override
     public void onDestroy() {
-        EventBus.getDefault().unregister(this);
+        TimerEventBusRegistry.getInstance().unregisterSubscriber(this);
         stopTimer();
         super.onDestroy();
     }
@@ -76,7 +80,7 @@ public class TimerService extends Service {
 
         @Override
         public void run() {
-            EventBus.getDefault().postSticky(new AddTimerElementEvent(current.addAndGet(1)));
+            TimerEventBus.getInstance().postSticky(new AddTimerElementEvent(current.addAndGet(1)));
         }
     }
 }

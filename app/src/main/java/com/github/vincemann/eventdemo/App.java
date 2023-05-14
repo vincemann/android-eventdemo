@@ -2,9 +2,13 @@ package com.github.vincemann.eventdemo;
 
 import android.app.Application;
 
+import com.github.vincemann.eventdemo.event.registry.LoginEventBusRegistry;
+import com.github.vincemann.eventdemo.event.registry.TimerEventBusRegistry;
+
 public class App extends Application {
     private static App INSTANCE;
-    private EventBusRegistry registry;
+    private LoginEventBusRegistry loginBusRegistry;
+    private TimerEventBusRegistry timerEventBusRegistry;
 
     public static App getInstance() {
         return INSTANCE;
@@ -18,15 +22,19 @@ public class App extends Application {
     }
 
     private void startEventProcessing() {
-        registry = new EventBusRegistry(this);
-        registry.registerDefaultSubscribers();
+        loginBusRegistry = new LoginEventBusRegistry(this);
+        timerEventBusRegistry = new TimerEventBusRegistry(this);
+        loginBusRegistry.registerDefaultSubscribers();
+        timerEventBusRegistry.registerDefaultSubscribers();
     }
 
     @Override
     public void onTerminate() {
         super.onTerminate();
         INSTANCE = null;
-        registry.unregisterAllSubscribers();
-        registry = null;
+        loginBusRegistry.unregisterAllSubscribers();
+        timerEventBusRegistry.unregisterAllSubscribers();
+        loginBusRegistry = null;
+        timerEventBusRegistry = null;
     }
 }

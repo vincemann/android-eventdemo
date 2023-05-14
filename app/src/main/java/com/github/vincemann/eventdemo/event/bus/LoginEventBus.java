@@ -2,7 +2,7 @@ package com.github.vincemann.eventdemo.event.bus;
 
 import com.github.vincemann.eventdemo.common.domain.AbstractEventBus;
 
-public class LoginEventBus extends AbstractEventBus {
+public class LoginEventBus extends GlobalEventBus {
     private static volatile LoginEventBus defaultInstance;
 
     public static LoginEventBus getInstance() {

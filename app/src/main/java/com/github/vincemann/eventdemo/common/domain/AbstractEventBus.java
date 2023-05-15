@@ -13,11 +13,11 @@ import java.util.concurrent.TimeUnit;
  */
 public abstract class AbstractEventBus extends EventBus {
 
-    private final ScheduledExecutorService mExecutorService;
+    private final ScheduledExecutorService executorService;
 
     protected AbstractEventBus() {
         super();
-        mExecutorService = Executors.newSingleThreadScheduledExecutor();
+        executorService = Executors.newSingleThreadScheduledExecutor();
     }
 
 //    public static void postEvent(Object event) {
@@ -33,21 +33,21 @@ public abstract class AbstractEventBus extends EventBus {
 //    }
 
     public ScheduledFuture<Object> postDelayed(Object event, long delay) {
-        return mExecutorService.schedule(new PostEventCallable(this, event), delay, TimeUnit.MILLISECONDS);
+        return executorService.schedule(new PostEventCallable(this, event), delay, TimeUnit.MILLISECONDS);
     }
 
     private static class PostEventCallable implements Callable<Object> {
-        private final AbstractEventBus mEventBus;
-        private final Object mEvent;
+        private final AbstractEventBus eventBus;
+        private final Object event;
 
         public PostEventCallable(AbstractEventBus eventBus, Object event) {
-            mEventBus = eventBus;
-            mEvent = event;
+            this.eventBus = eventBus;
+            this.event = event;
         }
 
         @Override
         public Object call() throws Exception {
-            mEventBus.post(mEvent);
+            eventBus.post(event);
             return null;
         }
     }
